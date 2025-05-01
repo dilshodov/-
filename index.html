@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Объявления с Балансом</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #181a1b;
+      color: #fff;
+    }
+    .container {
+      padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    h1, h2 {
+      font-size: 24px;
+    }
+    .balance-display {
+      background: #202225;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      font-size: 18px;
+      text-align: center;
+      color: #00ff88;
+    }
+    .form {
+      background-color: #26282b;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .form input {
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #1f2123;
+      color: white;
+      font-size: 14px;
+    }
+    button {
+      background-color: #2b72ff;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .ads {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .ad {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #26282b;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #333;
+    }
+    .ad-info b {
+      color: #f0c040;
+    }
+    .vip {
+      color: #c09eff;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Объявления</h1>
+    <div class="balance-display" id="balanceDisplay">Баланс: 0</div>
+    <button onclick="toggleForm()">Подать объявление</button>
+    <div class="form" id="adForm" style="display: none;">
+      <input id="title" type="text" placeholder="Текст объявления">
+      <input id="number" type="text" placeholder="Номер для звонка">
+      <input id="telegram" type="text" placeholder="Telegram (без @)">
+      <input id="name" type="text" placeholder="Ваш ник (имя)">
+      <input id="editor" type="text" placeholder="Имя редактора">
+      <button onclick="addAd()">Подать объявление (1000)</button>
+    </div>
+
+    <h2>Список объявлений</h2>
+    <div class="ads" id="adsContainer"></div>
+  </div>
+
+  <script>
+    // Очистить старые объявления при загрузке
+   
+
+    const adsContainer = document.getElementById('adsContainer');
+    const adForm = document.getElementById('adForm');
+    const balanceDisplay = document.getElementById('balanceDisplay');
+    const userBalances = JSON.parse(localStorage.getItem('balances') || '{}');
+    let savedAds = [];
+
+    function renderBalance(name) {
+      const balance = userBalances[name] || 0;
+      balanceDisplay.textContent = `Баланс (${name || 'неизвестен'}): ${balance}`;
+    }
+
+    function renderAds() {
+      adsContainer.innerHTML = '';
+      savedAds.forEach((ad) => {
+        const el = document.createElement('div');
+        el.className = 'ad';
+        el.innerHTML = `
+          <div class="ad-info">
+            <b>${ad.name}</b> <span class="vip">VIP</span><br>
+            ${ad.title}<br>
+            Редактор: ${ad.editor}
+          </div>
+          <div class="ad-actions">
+            <button onclick="window.location.href='tel:${ad.number}'">Позвонить</button>
+           <button onclick="window.open('https://t.me/${ad.telegram}', '_blank')">Написать</button>
+
+          </div>
+        `;
+        adsContainer.appendChild(el);
+      });
+    }
+
+    function addAd() {
+      const title = document.getElementById('title').value;
+      const number = document.getElementById('number').value;
+      const telegram = document.getElementById('telegram').value;
+      const name = document.getElementById('name').value;
+      const editor = document.getElementById('editor').value;
+
+      if (!title || !number || !telegram || !name || !editor) {
+        alert('Заполните все поля');
+        return;
+      }
+
+      if (!userBalances[name] || userBalances[name] < 1000) {
+        alert(`Недостаточно средств. Ваш баланс: ${userBalances[name] || 0}`);
+        return;
+      }
+
+      userBalances[name] -= 1000;
+      localStorage.setItem('balances', JSON.stringify(userBalances));
+      renderBalance(name);
+
+      savedAds.push({ title, number, telegram, name, editor });
+      localStorage.setItem('ads', JSON.stringify(savedAds));
+      renderAds();
+      adForm.style.display = 'none';
+    }
+
+    function toggleForm() {
+      adForm.style.display = adForm.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Старт
+    renderAds();
+    renderBalance('');
+  </script>
+</body>
+</html>
